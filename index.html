@@ -71,6 +71,10 @@ h1 .ln{display:block}
 .btn{display:inline-block;margin-top:42px;border:1px solid var(--mint);color:var(--mint);padding:14px 44px;letter-spacing:.3em;font:500 14px var(--display);text-decoration:none;background:transparent;cursor:pointer;position:relative;overflow:hidden;transition:color .3s}
 .btn::after{content:"";position:absolute;inset:0;background:var(--mint);transform:scaleX(0);transform-origin:left;transition:transform .35s;z-index:-1}
 .btn:hover{color:var(--bg)}
+.btn.ghost{margin-left:12px;border-color:var(--pink);color:var(--pink)}
+.btn.ghost::after{background:var(--pink)}
+.btn.ghost:hover{color:#fff}
+@media (max-width:420px){.btn.ghost{margin-left:0}}
 .btn:hover::after{transform:scaleX(1)}
 .btn{z-index:0}
 .scroll{position:absolute;left:12px;bottom:18px;writing-mode:vertical-rl;font-size:12px;color:var(--muted);letter-spacing:.1em;z-index:1}
@@ -183,6 +187,7 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
   <div class="social">
     <a href="https://www.linkedin.com/in/minseok-kang-399813284/" target="_blank" rel="noopener" aria-label="LinkedIn">in</a>
     <a href="#contact" aria-label="이메일">@</a>
+    <a href="portfolio.pdf" target="_blank" rel="noopener" aria-label="포트폴리오 PDF">PDF</a>
   </div>
 </aside>
 
@@ -203,6 +208,7 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
       <p class="sub">모의해킹 / 취약점 분석 · 서울</p>
       <span class="tag">&lt;/p&gt;</span>
       <a class="btn" href="#contact">Contact me!</a>
+      <a class="btn ghost" href="portfolio.pdf" target="_blank" rel="noopener">Portfolio PDF</a>
     </div>
     <span class="scroll">scroll down ↓</span>
   </header>
@@ -236,11 +242,11 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
           <div>
             <h4>Certificates</h4>
             <dl>
-              <dt>CISA</dt><dd>국제공인정보시스템감사사</dd>
-              <dt>정보보안기사</dt><dd>정보보안 전문 국가기술자격</dd>
-              <dt>정보처리기사</dt><dd>국가기술자격</dd>
-              <dt>CPPG</dt><dd>개인정보관리사</dd>
-              <dt>AWS Certified Solutions Architect – Associate</dt><dd>AWS</dd>
+              <dt>CISA</dt><dd>국제공인정보시스템감사사 · 2026.09</dd>
+              <dt>정보보안기사</dt><dd>국가기술자격 · 2023.05</dd>
+              <dt>정보처리기사</dt><dd>국가기술자격 · 2019.08</dd>
+              <dt>CPPG</dt><dd>개인정보관리사 · 2023.09</dd>
+              <dt>AWS Certified Solutions Architect – Associate</dt><dd>Amazon Web Services · 2023.10</dd>
             </dl>
           </div>
         </div>
@@ -291,6 +297,7 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
       <div class="mail">
         <code id="email">k01753927@gmail.com</code>
         <button class="mini" id="copy" type="button">주소 복사</button>
+        <a class="mini" href="portfolio.pdf" target="_blank" rel="noopener" style="text-decoration:none">포트폴리오 PDF 보기</a>
       </div>
       <form id="form">
         <input id="f-name" placeholder="이름" required>
