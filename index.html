@@ -91,6 +91,7 @@ h2{font-family:var(--display);font-weight:900;color:var(--mint);font-size:clamp(
 .facts b{display:block;font:900 34px/1 var(--display);color:var(--fg);font-variant-numeric:tabular-nums}
 .facts span{font-size:12px;color:var(--muted)}
 
+.about-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
 /* skills */
 .bars{display:grid;gap:18px;margin-top:6px}
 .bar header{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px}
@@ -246,13 +247,14 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
         <div class="lead">
           <p>웹·모바일 애플리케이션부터 IoT 기기, 차량 통신 모듈까지 다양한 환경에서 모의해킹과 보안 취약점 진단을 해 온 정보보안 컨설턴트 강민석입니다.</p>
           <p>네트워크 패킷 분석, 펌웨어 역공학, 동적 디버깅으로 복잡한 시스템의 보안 문제를 분석하고, 실제로 공격이 가능한지 검증해 왔습니다. 하드코딩된 인증정보, 인증·접근통제 미흡, 중요정보 노출 같은 취약점을 찾아 개선 방안을 제시했습니다.</p>
-          <p>버그바운티로 취약점 20건을 제보해 KISA로부터 KVE 번호 20건을 받았고, WordPress 플러그인 취약점 2건으로 CVE를 받았습니다. CISA와 정보보안기사 자격을 바탕으로 기술 진단을 넘어 보안 거버넌스와 IT 감사 영역으로 전문성을 넓히고 있습니다.</p>
+          <p>버그바운티로 취약점 20건을 제보해 KISA로부터 KVE 번호 20건을 받았고, WordPress 플러그인 취약점을 제보해 CVE 2건(<a href="#cve" style="color:var(--mint);white-space:nowrap">CVE-2026-129059</a>, <a href="#cve" style="color:var(--mint);white-space:nowrap">CVE-2026-130816</a>)에 발견자로 등재되었습니다. CISA와 정보보안기사 자격을 바탕으로 기술 진단을 넘어 보안 거버넌스와 IT 감사 영역으로 전문성을 넓히고 있습니다.</p>
         </div>
         <span class="tag">&lt;/h2&gt;</span>
       </div>
       <div>
-        <div class="facts" style="margin-top:8px">
+        <div class="facts about-facts" style="margin-top:8px">
           <div><b>3+</b><span>년 실무 경력</span></div>
+          <div><b>2</b><span>건 CVE 등재</span></div>
           <div><b>20</b><span>건 KVE 등록 (KISA)</span></div>
           <div><b>5</b><span>개 전문 자격</span></div>
         </div>
