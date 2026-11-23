@@ -127,18 +127,7 @@ h2{font-family:var(--display);font-weight:900;color:var(--mint);font-size:clamp(
 .card:hover h3{color:var(--pink)}
 
 /* cve */
-.vulns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:1100px}
-@media (max-width:1100px){.vulns{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:760px){.vulns{grid-template-columns:minmax(0,1fr)}}
-.vuln{border:1px solid var(--line);padding:24px;display:flex;flex-direction:column;gap:10px;text-decoration:none;transition:background .25s,border-color .25s}
-.vuln:hover{background:var(--panel);border-color:var(--mint)}
 .vid{font:800 20px/1.2 var(--display);color:var(--mint);letter-spacing:.01em;font-variant-numeric:tabular-nums}
-.vuln h3{font:700 16px/1.45 var(--body);margin:0;color:var(--fg)}
-.vmeta{display:flex;flex-wrap:wrap;gap:6px}
-.vmeta span{font-size:12px;border:1px solid var(--line);color:var(--muted);padding:2px 10px}
-.vmeta .sev{border-color:var(--pink);color:var(--pink)}
-.vuln small{color:var(--faint);font-size:12px;margin-top:auto}
-.vuln.kve .vid{color:var(--pink)}
 .bb{margin-top:28px;border:1px solid var(--line);padding:24px;max-width:1100px}
 .bb-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px}
 .bb-sub{margin:4px 0 0;color:var(--muted);font-size:13px}
@@ -147,7 +136,9 @@ h2{font-family:var(--display);font-weight:900;color:var(--mint);font-size:clamp(
 .bb-table table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
 .bb-table th{position:sticky;top:0;background:var(--bg);text-align:left;color:var(--muted);font-weight:400;font-size:12px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .bb-table td{padding:9px 12px;border-bottom:1px solid #2a2a30;font-variant-numeric:tabular-nums}
-.bb-table td:nth-child(2){font-family:var(--display);color:var(--fg)}
+.bb-table td:nth-child(2){font-family:var(--display);color:var(--fg);white-space:nowrap}
+.cvelink{color:var(--mint);text-decoration:none}.cvelink:hover{text-decoration:underline}
+.bb + .bb{margin-top:20px}
 .cwe{font-size:12px;padding:1px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .cwe.sqli{border-color:var(--pink);color:var(--pink)}
 @media (max-width:760px){.bb{padding:18px}.bb-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -312,7 +303,18 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
       <span class="tag">&lt;h2&gt;</span>
       <h2>CVE &amp; KVE</h2>
       <p class="lead" style="margin:0 0 30px">직접 발견해 제보하고 공식 번호를 받은 취약점입니다. CVE는 공개 기록으로, KVE는 KISA 취약점 신고 증명서(2026.11.18 발급)로 확인할 수 있습니다.</p>
-      <div class="vulns" id="vulns"></div>
+      <div class="bb" style="margin-top:0">
+        <div class="bb-head">
+          <div>
+            <div class="vid">CVE 5건 · Patchstack</div>
+            <p class="bb-sub">WordPress 플러그인 취약점 · 모든 기록에 발견자 "Kang MinSeok (AhnLab)" 표기 · CVE 번호를 누르면 cve.org 공식 기록으로 이동합니다.</p>
+          </div>
+        </div>
+        <div class="bb-table"><table>
+          <thead><tr><th>공개일</th><th>CVE 번호</th><th>대상 플러그인</th><th>취약점 종류</th><th>CVSS</th><th>CWE</th></tr></thead>
+          <tbody id="cverows"></tbody>
+        </table></div>
+      </div>
       <div class="bb">
         <div class="bb-head">
           <div>
@@ -401,11 +403,11 @@ const CAREER=[
   tags:["Python","Kali Linux","Android","Burp Suite","Frida"]}
 ];
 const VULNS=[
- {id:"CVE-2026-131756",title:"WordPress EventPrime 플러그인 ≤ 4.3.9.0 접근통제 미흡 (Broken Access Control)",tags:["CWE-862 Missing Authorization","EventPrime"],sev:"CVSS 5.3 Medium",date:"2026.11 공개 · Patchstack",url:"https://www.cve.org/CVERecord?id=CVE-2026-131756"},
- {id:"CVE-2026-131737",title:"WordPress Car Rental Manager 플러그인 ≤ 1.5.7 접근통제 미흡 (Broken Access Control)",tags:["CWE-862 Missing Authorization","Magepeople"],sev:"CVSS 5.3 Medium",date:"2026.11 공개 · Patchstack",url:"https://www.cve.org/CVERecord?id=CVE-2026-131737"},
- {id:"CVE-2026-131744",title:"WordPress Church Admin 플러그인 ≤ 5.1.11 접근통제 미흡 (Broken Access Control)",tags:["CWE-862 Missing Authorization","Andy Moyle"],sev:"CVSS 4.3 Medium",date:"2026.11 공개 · Patchstack",url:"https://www.cve.org/CVERecord?id=CVE-2026-131744"},
- {id:"CVE-2026-129059",title:"WordPress Sunshine Photo Cart 플러그인 ≤ 3.8.1 접근통제 미흡 (Broken Access Control)",tags:["CWE-862 Missing Authorization","WP Sunshine"],sev:"CVSS 5.3 Medium",date:"2026.11 공개 · Patchstack",url:"https://www.cve.org/CVERecord?id=CVE-2026-129059"},
- {id:"CVE-2026-130816",title:"WordPress Ad Inserter 플러그인 ≤ 2.8.19 콘텐츠 삽입 (XSS)",tags:["CWE-80 Basic XSS","Igor Funa"],sev:"CVSS 5.3 Medium",date:"2026.11 공개 · Patchstack",url:"https://www.cve.org/CVERecord?id=CVE-2026-130816"},
+ ["2026-11-20","CVE-2026-131756","EventPrime ≤ 4.3.9.0","Broken Access Control","5.3",862],
+ ["2026-11-20","CVE-2026-131737","Car Rental Manager ≤ 1.5.7","Broken Access Control","5.3",862],
+ ["2026-11-20","CVE-2026-131744","Church Admin ≤ 5.1.11","Broken Access Control","4.3",862],
+ ["2026-11-17","CVE-2026-129059","Sunshine Photo Cart ≤ 3.8.1","Broken Access Control","5.3",862],
+ ["2026-11-17","CVE-2026-130816","Ad Inserter ≤ 2.8.19","XSS (Content Injection)","5.3",80]
 ];
 const BOUNTY=[
  ["2025-08-09","KVE-2025-1027","SQL Injection",89],
@@ -444,7 +446,7 @@ $("#bars").innerHTML=SKILLS.map(([n,d,l])=>`<div class="bar"><header><span class
 $("#tl").innerHTML=CAREER.map(c=>`<li><div class="when">${esc(c.when)}</div><h3>${esc(c.title)}</h3><div class="org">${esc(c.org)}</div><ul>${c.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul><div class="chips">${c.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div></li>`).join("");
 $("#grid").innerHTML=WORK.map(w=>`<article class="card"><div class="yr">${esc(w.yr)}</div><h3>${esc(w.t)}</h3><p>${esc(w.d)}</p><div class="chips">${w.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div></article>`).join("");
 
-$("#vulns").innerHTML=VULNS.map(v=>`<a class="vuln${v.kve?" kve":""}" href="${esc(v.url)}" target="_blank" rel="noopener"><div class="vid">${esc(v.id)}</div><h3>${esc(v.title)}</h3><div class="vmeta">${v.sev?`<span class="sev">${esc(v.sev)}</span>`:""}${v.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div><small>${esc(v.date)} ↗</small></a>`).join("");
+$("#cverows").innerHTML=VULNS.map(([d,id,pl,t,sc,w])=>`<tr><td>${d}</td><td><a class="cvelink" href="https://www.cve.org/CVERecord?id=${id}" target="_blank" rel="noopener">${id} ↗</a></td><td>${esc(pl)}</td><td>${esc(t)}</td><td><span class="cwe sqli">${sc} Medium</span></td><td><span class="cwe">CWE-${w}</span></td></tr>`).join("");
 
 $("#bbrows").innerHTML=BOUNTY.map(([d,c,t,w])=>`<tr><td>${d}</td><td>${esc(c)}</td><td>${esc(t)}</td><td><span class="cwe${w===89?" sqli":""}">CWE-${w}</span></td></tr>`).join("");
 
