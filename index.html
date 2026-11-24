@@ -126,6 +126,8 @@ h2{font-family:var(--display);font-weight:900;color:var(--mint);font-size:clamp(
 .card p{margin:0;color:#b9b9c0;font-size:14px}
 .card:hover h3{color:var(--pink)}
 
+.certs .card h3{color:var(--mint)}.certs .card:hover h3{color:var(--pink)}
+
 /* cve */
 .vid{font:800 20px/1.2 var(--display);color:var(--mint);letter-spacing:.01em;font-variant-numeric:tabular-nums}
 .bb{margin-top:28px;border:1px solid var(--line);padding:24px;max-width:1100px}
@@ -199,6 +201,7 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
     <a href="#skills">Skills</a>
     <a href="#career">Career</a>
     <a href="#cve">CVE</a>
+    <a href="#certs">Certs</a>
     <a href="#work">Work</a>
     <a href="#contact">Contact</a>
   </nav>
@@ -256,16 +259,6 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
             <h4>Education</h4>
             <dl>
               <dt>경남과학기술대학교 컴퓨터공학과 학사</dt><dd>2020.02 졸업</dd>
-            </dl>
-          </div>
-          <div>
-            <h4>Certificates</h4>
-            <dl>
-              <dt>CISA</dt><dd>국제공인정보시스템감사사 · 2026.09</dd>
-              <dt>정보보안기사</dt><dd>국가기술자격 · 2023.05</dd>
-              <dt>정보처리기사</dt><dd>국가기술자격 · 2019.08</dd>
-              <dt>CPPG</dt><dd>개인정보관리사 · 2023.09</dd>
-              <dt>AWS Certified Solutions Architect – Associate</dt><dd>Amazon Web Services · 2023.10</dd>
             </dl>
           </div>
         </div>
@@ -334,6 +327,17 @@ footer{padding-block:28px 40px;color:var(--faint);font-size:12px}
         </table></div>
       </div>
       <span class="tag" style="margin-top:14px">&lt;/h2&gt;</span>
+    </div>
+  </section>
+
+  <!-- CERTIFICATES -->
+  <section id="certs">
+    <div class="wrap">
+      <span class="tag">&lt;h2&gt;</span>
+      <h2>Certificates</h2>
+      <p class="lead" style="margin:0 0 30px">보안 진단 실무를 뒷받침하는 전문 자격입니다. IT 감사, 정보보안, 개인정보 보호, 클라우드 영역을 다룹니다.</p>
+      <div class="grid certs" id="certgrid"></div>
+      <span class="tag" style="margin-top:20px">&lt;/h2&gt;</span>
     </div>
   </section>
 
@@ -437,6 +441,13 @@ const BOUNTY=[
  ["2024-07-31","KVE-2024-1610","Reflected XSS",79],
  ["2024-07-30","KVE-2024-1947","Time-based SQL Injection",89]
 ];
+const CERTS=[
+ {d:"2026.09",n:"CISA",f:"국제공인정보시스템감사사",k:"IT 감사 · 거버넌스"},
+ {d:"2023.10",n:"AWS Certified Solutions Architect – Associate",f:"Amazon Web Services",k:"클라우드"},
+ {d:"2023.09",n:"CPPG",f:"개인정보관리사",k:"개인정보 보호"},
+ {d:"2023.05",n:"정보보안기사",f:"국가기술자격",k:"정보보안"},
+ {d:"2019.08",n:"정보처리기사",f:"국가기술자격",k:"IT 일반"}
+];
 const WORK=[
  {yr:"2026",t:"IoT 통합관제 · 바디캠 시스템 보안 진단",d:"모바일 앱, 관제 서버, 바디캠 단말 사이의 통신 구조를 분석하고 MQTT, RTSP, WebSocket의 인증·접근통제 취약점을 검증했습니다. 앱 역공학과 동적 분석으로 인증정보 저장 방식, 무결성 검증, 디버깅 방어체계도 평가했습니다.",tags:["Android","Frida","MQTT","RTSP","WebSocket","Python"]},
  {yr:"2026",t:"IPTV 셋톱박스 보안 취약점 분석",d:"펌웨어와 네트워크 프로토콜을 분석해 원격 제어 기능, 인증정보 처리, 중요정보 노출 가능성을 검증했습니다. DIAL, SNMP, RTSP와 관리자 API에서 인증·접근통제 미흡과 암호화 키 관리 취약점을 발견했습니다.",tags:["Linux","Wireshark","SNMP","RTSP","Python","Firmware"]},
@@ -451,6 +462,8 @@ const LV={"상":90,"중":68};
 $("#bars").innerHTML=SKILLS.map(([n,d,l])=>`<div class="bar"><header><span class="bn">${esc(n)}<small>${esc(d)}</small></span><span>${esc(l)}</span></header><div class="track"><div class="fill" style="width:${LV[l]}%"></div></div></div>`).join("");
 $("#tl").innerHTML=CAREER.map(c=>`<li><div class="when">${esc(c.when)}</div><h3>${esc(c.title)}</h3><div class="org">${esc(c.org)}</div><ul>${c.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul><div class="chips">${c.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div></li>`).join("");
 $("#grid").innerHTML=WORK.map(w=>`<article class="card"><div class="yr">${esc(w.yr)}</div><h3>${esc(w.t)}</h3><p>${esc(w.d)}</p><div class="chips">${w.tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div></article>`).join("");
+
+$("#certgrid").innerHTML=CERTS.map(c=>`<article class="card"><div class="yr">${esc(c.d)}</div><h3>${esc(c.n)}</h3><p>${esc(c.f)}</p><div class="chips"><span>${esc(c.k)}</span></div></article>`).join("");
 
 $("#cverows").innerHTML=VULNS.map(([d,id,pl,t,sc,w])=>`<tr><td style="white-space:nowrap">${d}</td><td><a class="cvelink" href="https://www.cve.org/CVERecord?id=${id}" target="_blank" rel="noopener">${id} ↗</a></td><td>${esc(pl)}</td><td>${esc(t)}</td><td><span class="cwe sqli">${sc} Medium</span></td><td><span class="cwe">CWE-${w}</span></td></tr>`).join("");
 
