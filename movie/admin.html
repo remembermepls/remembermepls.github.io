@@ -12,7 +12,7 @@
 :root{
   color-scheme: dark;
   --bg:#1d1d1f; --panel:#252528; --line:#34343a;
-  --fg:#f4f4f5; --muted:#8d8d96; --pink:#fd2155; --mint:#08fdd8;
+  --fg:#f4f4f5; --muted:#8d8d96; --pink:#fd2155; --mint:#08fdd8; --gold:#ffc94d;
   --display:"Archivo","Noto Sans KR",system-ui,sans-serif;
   --body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
 }
@@ -37,10 +37,10 @@ header h1 em{font:700 12px var(--body);color:var(--muted);font-style:normal;marg
 .tools{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;font-size:14px;color:var(--muted)}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
-.item{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 10px 12px;text-align:center;cursor:pointer;transition:border-color .15s,transform .15s}
+.item{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 10px 12px;text-align:center;cursor:pointer;transition:border-color .15s,transform .15s}
 .item:hover{border-color:var(--muted)}
 .item .no{position:absolute;top:8px;left:10px;font:800 11px var(--display);color:var(--muted)}
-.item .e{display:block;font-size:26px;line-height:1.3;margin:8px 0 4px;white-space:nowrap}
+.item .e{display:block;font-size:26px;line-height:1.3;margin:4px 0 4px;white-space:nowrap}
 .item .t{display:block;font-size:13px;font-weight:700}
 .item.sel{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink) inset}
 .item.used{opacity:.45}
@@ -48,6 +48,18 @@ header h1 em{font:700 12px var(--body);color:var(--muted);font-style:normal;marg
 .item.live{opacity:1;border-color:var(--mint);box-shadow:0 0 0 1px var(--mint) inset}
 .item.live .no{color:var(--mint)}
 .item.live .no::after{content:" ● 출제 중"}
+.item .lv{position:absolute;top:7px;right:8px;font-size:10px;font-weight:700;border-radius:999px;padding:0 7px;border:1px solid currentColor}
+.lv1{color:var(--mint)} .lv2{color:var(--gold)} .lv3{color:var(--pink)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 16px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted);white-space:nowrap}
+.tab small{font-weight:400;margin-left:4px;opacity:.8}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.tab.lv1[aria-selected="true"]{background:var(--mint);border-color:var(--mint)}
+.tab.lv2[aria-selected="true"]{background:var(--gold);border-color:var(--gold)}
+.tab.lv3[aria-selected="true"]{background:var(--pink);border-color:var(--pink);color:#fff}
+.tools .right{display:flex;gap:8px;flex-wrap:wrap}
 
 .dock{position:fixed;left:0;right:0;bottom:0;background:rgba(18,18,20,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:14px max(16px,3vw) calc(14px + env(safe-area-inset-bottom,0px))}
 .dock-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -76,9 +88,13 @@ header h1 em{font:700 12px var(--body);color:var(--muted);font-style:normal;marg
     <button class="small" id="copyBtn">링크 복사</button>
     <a class="small" id="openLink" target="_blank" rel="noopener" style="text-decoration:none">새 창으로 열기</a>
   </div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="난이도"></div>
   <div class="tools">
-    <span>문제를 고른 뒤 아래 <b style="color:var(--pink)">문제내기</b>를 누르세요. <span id="usedCount"></span></span>
-    <button class="small" id="resetUsed">출제 기록 지우기</button>
+    <span>난이도를 고르고 문제를 고른 뒤 아래 <b style="color:var(--pink)">문제내기</b>를 누르세요. <span id="usedCount"></span></span>
+    <span class="right">
+      <button class="small" id="randomBtn">🎲 이 난이도에서 랜덤 고르기</button>
+      <button class="small" id="resetUsed">출제 기록 지우기</button>
+    </span>
   </div>
   <div class="grid" id="grid"></div>
 </div>
@@ -99,7 +115,10 @@ header h1 em{font:700 12px var(--body);color:var(--muted);font-style:normal;marg
 <script>
 const $ = id => document.getElementById(id);
 const USED_KEY = "emoji-movie-used";
+const LEVEL_KEY = "emoji-movie-level";
 let selected = null;
+let level = 0;   // 0 = 전체, 1 쉬움, 2 보통, 3 어려움
+try { level = Number(localStorage.getItem(LEVEL_KEY)) || 0; if (!LEVELS[level]) level = 0; } catch (e) {}
 let live = { id: null, revealed: false };
 let used = new Set();
 try { used = new Set(JSON.parse(localStorage.getItem(USED_KEY) || "[]")); } catch (e) {}
@@ -115,8 +134,9 @@ MOVIES.forEach(m => {
   const b = document.createElement("button");
   b.className = "item";
   b.dataset.id = m.id;
-  b.innerHTML = `<span class="no"></span><span class="e"></span><span class="t"></span>`;
+  b.innerHTML = `<span class="no"></span><span class="lv lv${m.level}"></span><span class="e"></span><span class="t"></span>`;
   b.querySelector(".no").textContent = `#${m.id}`;
+  b.querySelector(".lv").textContent = LEVELS[m.level];
   b.querySelector(".e").textContent = m.emoji;
   b.querySelector(".t").textContent = m.title;
   b.onclick = () => { selected = m.id; render(); };
@@ -124,9 +144,51 @@ MOVIES.forEach(m => {
   $("grid").appendChild(b);
 });
 
+// 난이도 탭
+[0, 1, 2, 3].forEach(l => {
+  const t = document.createElement("button");
+  t.className = "tab" + (l ? ` lv${l}` : "");
+  t.setAttribute("role", "tab");
+  t.dataset.level = l;
+  t.onclick = () => {
+    level = l;
+    try { localStorage.setItem(LEVEL_KEY, String(l)); } catch (e) {}
+    render();
+  };
+  $("tabs").appendChild(t);
+});
+
+const inLevel = m => !level || m.level === level;
+
+// 현재 난이도에서 아직 안 낸 문제 중 하나를 무작위로 고른다 (다 냈으면 전체에서).
+$("randomBtn").onclick = () => {
+  const pool = MOVIES.filter(inLevel).filter(m => m.id !== live.id);
+  const fresh = pool.filter(m => !used.has(m.id));
+  const from = fresh.length ? fresh : pool;
+  if (!from.length) return;
+  selected = from[Math.floor(Math.random() * from.length)].id;
+  render();
+  document.querySelector(`.item[data-id="${selected}"]`).scrollIntoView({ block: "center", behavior: "smooth" });
+  if (!fresh.length) toast(`${level ? LEVELS[level] + " 난이도" : "모든"} 문제를 다 냈어요. 이미 낸 문제 중에서 골랐어요.`);
+};
+
 function render() {
+  [...$("tabs").children].forEach(t => {
+    const l = Number(t.dataset.level);
+    const list = MOVIES.filter(m => !l || m.level === l);
+    const done = list.filter(m => used.has(m.id)).length;
+    t.setAttribute("aria-selected", String(l === level));
+    t.innerHTML = "";
+    t.append(l ? LEVELS[l] : "전체");
+    const c = document.createElement("small");
+    c.textContent = done ? `${done}/${list.length}` : String(list.length);
+    t.appendChild(c);
+  });
+  $("randomBtn").textContent = `🎲 ${level ? LEVELS[level] + "에서" : "전체에서"} 랜덤 고르기`;
+
   [...$("grid").children].forEach(b => {
     const id = Number(b.dataset.id);
+    b.hidden = !inLevel(findMovie(id));
     b.classList.toggle("sel", id === selected);
     b.classList.toggle("used", used.has(id) && id !== live.id);
     b.classList.toggle("live", id === live.id);
@@ -138,7 +200,7 @@ function render() {
   if (sel) {
     p.innerHTML = `<span class="e"></span><div><small>선택한 문제</small><span class="t"></span></div>`;
     p.querySelector(".e").textContent = sel.emoji;
-    p.querySelector(".t").textContent = `#${sel.id} ${sel.title}`;
+    p.querySelector(".t").textContent = `#${sel.id} ${sel.title} · ${LEVELS[sel.level]}`;
   } else {
     p.innerHTML = `<div><small>선택한 문제</small><span class="t" style="color:var(--muted)">위에서 문제를 골라 주세요</span></div>`;
   }
