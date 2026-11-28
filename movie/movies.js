@@ -6,7 +6,7 @@
 window.RELAY = "https://ntfy.sh";
 window.TOPIC = "emoji-movie-iyayd3admwes";
 
-// 난이도: 1 쉬움 · 2 보통 · 3 어려움
+// 난이도: 1 쉬움 · 2 보통 · 3 어려움   (k10m: true = 천만 관객 한국 영화)
 window.LEVELS = { 1: "쉬움", 2: "보통", 3: "어려움" };
 
 // 문제 목록. id는 서로 겹치지 않게 유지하세요(관리자가 보낸 번호로 문제를 찾습니다).
@@ -34,7 +34,7 @@ window.MOVIES = [
   { id: 6,  level: 2, emoji: "🧙‍♂️💍🌋",  title: "반지의 제왕" },
   { id: 8,  level: 2, emoji: "👴🏠🎈",   title: "업" },
   { id: 9,  level: 2, emoji: "🤖🌱🚀",   title: "월-E" },
-  { id: 13, level: 2, emoji: "🚄🧟‍♂️🏙️",  title: "부산행" },
+  { id: 13, level: 2, k10m: true, emoji: "🚄🧟‍♂️🧟‍♀️👨‍👧💪🏙️", title: "부산행" },
   { id: 16, level: 2, emoji: "👸🐃🌹",   title: "미녀와 야수" },
   { id: 18, level: 2, emoji: "🟢👹🐴",   title: "슈렉" },
   { id: 19, level: 2, emoji: "👹👧🚪",   title: "몬스터 주식회사" },
@@ -44,19 +44,19 @@ window.MOVIES = [
   { id: 29, level: 2, emoji: "👽🚲🌕",   title: "E.T." },
   { id: 31, level: 2, emoji: "🐰👮‍♀️🦊",  title: "주토피아" },
   { id: 32, level: 2, emoji: "👦🏠🎄🪤", title: "나 홀로 집에" },
-  { id: 33, level: 2, emoji: "🌊🏙️🏖️",   title: "해운대" },
+  { id: 33, level: 2, k10m: true, emoji: "🏖️🌊🌊🏙️😱🚁", title: "해운대" },
   { id: 34, level: 2, emoji: "🔵👽🌳",   title: "아바타" },
-  { id: 35, level: 2, emoji: "1️⃣2️⃣⛵⚔️", title: "명량" },
+  { id: 35, level: 2, k10m: true, emoji: "1️⃣2️⃣⛵🆚🚢🌀", title: "명량" },
 
   // ── 어려움 (18)
-  { id: 12, level: 3, emoji: "🏠🪨🍑🪜", title: "기생충" },
-  { id: 14, level: 3, emoji: "🌉👹🏹",   title: "괴물" },
+  { id: 12, level: 3, k10m: true, emoji: "🏠🪨🍑🪜⬇️🌧️", title: "기생충" },
+  { id: 14, level: 3, k10m: true, emoji: "🌉🐟👹🧪👧🏹", title: "괴물" },
   { id: 28, level: 3, emoji: "🚀🌽🕳️⏳", title: "인터스텔라" },
   { id: 36, level: 3, emoji: "🔨🐙🥟🔒", title: "올드보이" },
   { id: 37, level: 3, emoji: "🌾🌧️📻🔦", title: "살인의 추억" },
-  { id: 38, level: 3, emoji: "🕵️🍗💰🔫", title: "극한직업" },
+  { id: 38, level: 2, k10m: true, emoji: "🕵️‍♂️🕵️‍♀️🍗🍗💰🔫", title: "극한직업" },
   { id: 39, level: 3, emoji: "🎴✋🔪💰", title: "타짜" },
-  { id: 40, level: 3, emoji: "🚒👼⚖️7️⃣", title: "신과함께" },
+  { id: 40, level: 2, k10m: true, emoji: "🚒👨‍🚒⚖️7️⃣🔥👹", title: "신과함께-죄와 벌" },
   { id: 41, level: 3, emoji: "💤🏙️🔄🌀", title: "인셉션" },
   { id: 42, level: 3, emoji: "🔨🧱🕳️🌧️", title: "쇼생크 탈출" },
   { id: 43, level: 3, emoji: "🍫📦🏃‍♂️🪶", title: "포레스트 검프" },
@@ -67,10 +67,36 @@ window.MOVIES = [
   { id: 48, level: 3, emoji: "🚗⚡⏰🔙", title: "백 투 더 퓨처" },
   { id: 49, level: 3, emoji: "💈👨🔪👧", title: "아저씨" },
   { id: 50, level: 3, emoji: "🌱👵🇺🇸🏡", title: "미나리" },
+
+  // ── 🇰🇷 천만 관객 한국 영화 (위의 7편과 합쳐 25편)
+  { id: 51, level: 3, k10m: true, emoji: "🏝️🪖🏋️‍♂️🚌💥🇰🇷", title: "실미도" },
+  { id: 52, level: 2, k10m: true, emoji: "👬🪖🇰🇷💥👞⛰️", title: "태극기 휘날리며" },
+  { id: 53, level: 2, k10m: true, emoji: "🎭🤹‍♂️🪢👑🍶🏯", title: "왕의 남자" },
+  { id: 54, level: 2, k10m: true, emoji: "💎🦹‍♀️🦹‍♂️🎰🇲🇴🧗", title: "도둑들" },
+  { id: 55, level: 3, k10m: true, emoji: "👑🧑‍🤝‍🧑🎭🏯📜🔄", title: "광해, 왕이 된 남자" },
+  { id: 56, level: 2, k10m: true, emoji: "7️⃣🚪👨‍👧🎒🌙🎈", title: "7번방의 선물" },
+  { id: 57, level: 3, k10m: true, emoji: "⚖️👨‍💼🍲📚🚔✊", title: "변호인" },
+  { id: 58, level: 3, k10m: true, emoji: "🚢❄️👦⛏️🇩🇪🏪", title: "국제시장" },
+  { id: 59, level: 3, k10m: true, emoji: "🕵️‍♀️🎯🔫👘💣🇰🇷", title: "암살" },
+  { id: 60, level: 2, k10m: true, emoji: "🕵️‍♂️👊💸🏢🚔😤", title: "베테랑" },
+  { id: 61, level: 2, k10m: true, emoji: "🚕🧑🏼📸🛣️🍙🌸", title: "택시운전사" },
+  { id: 62, level: 3, k10m: true, emoji: "🏠🧔‍♂️💪⏳🗡️⚖️", title: "신과함께-인과 연" },
+  { id: 63, level: 2, k10m: true, emoji: "💪👊🇻🇳🔪🚔2️⃣", title: "범죄도시2" },
+  { id: 64, level: 2, k10m: true, emoji: "💪👊🇯🇵💊🚔3️⃣", title: "범죄도시3" },
+  { id: 65, level: 2, k10m: true, emoji: "💪👊💻🎰🇵🇭4️⃣", title: "범죄도시4" },
+  { id: 66, level: 3, k10m: true, emoji: "🌃🪖🪖🚛🌉🌸", title: "서울의 봄" },
+  { id: 67, level: 3, k10m: true, emoji: "🪦⛏️🧧🥁🐷👹", title: "파묘" },
+  { id: 68, level: 3, k10m: true, emoji: "👦👑➡️🏞️🛖👨‍🌾", title: "왕과 사는 남자" },
 ];
 
 // 두 페이지가 주고받는 메시지 형식:
 //   { t: "q", id }  문제 출제      { t: "a", id }  정답 공개      { t: "c" }  화면 비우기
+// 이모지 개수(국기·숫자키 등 합쳐진 글자는 1개로 셈) — 화면에서 글자 크기를 맞출 때 사용
+window.emojiCount = str => {
+  try { return [...new Intl.Segmenter("ko", { granularity: "grapheme" }).segment(str)].length; }
+  catch (e) { return Math.ceil([...str].length / 1.5); }
+};
+
 window.findMovie = id => window.MOVIES.find(m => m.id === Number(id)) || null;
 
 window.parseMsg = raw => {
