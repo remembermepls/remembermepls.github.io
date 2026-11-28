@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="관리자가 내는 이모지 문제를 보고 영화 제목을 맞혀 보세요.">
+<title>이모지 영화 맞추기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#1d1d1f; --panel:#252528; --line:#34343a;
+  --fg:#f4f4f5; --muted:#8d8d96; --pink:#fd2155; --mint:#08fdd8;
+  --display:"Archivo","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.6;display:flex;flex-direction:column}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px max(16px,4vw);border-bottom:1px solid var(--line)}
+header h1{margin:0;font:900 20px var(--display);letter-spacing:-.5px}
+header h1 span{color:var(--pink)}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);white-space:nowrap}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.live i{background:var(--mint);box-shadow:0 0 0 4px rgba(8,253,216,.15)}
+.status.offline i{background:var(--pink)}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px 56px}
+.stage{width:100%;max-width:720px;text-align:center}
+.label{font:800 14px var(--display);color:var(--mint);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;min-height:22px}
+.emoji{background:var(--panel);border:1px solid var(--line);border-radius:28px;font-size:clamp(40px,13vw,120px);line-height:1.25;padding:clamp(32px,8vw,64px) 8px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;user-select:none}
+.emoji.pop{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.waiting .emoji{font-size:clamp(40px,10vw,64px);color:var(--muted)}
+.hint{color:var(--muted);margin:20px 0 0;min-height:26px}
+.answer{margin-top:24px;min-height:64px}
+.answer b{display:inline-block;font:900 clamp(28px,7vw,44px) var(--body);color:var(--mint);animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.answer small{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Emoji<span>Movie</span></h1>
+  <div class="status" id="status"><i></i><span>연결 중…</span></div>
+</header>
+
+<main>
+  <div class="stage waiting" id="stage">
+    <div class="label" id="label"></div>
+    <div class="emoji" id="emoji" aria-live="polite">⏳</div>
+    <p class="hint" id="hint">관리자가 문제를 내면 여기에 바로 나타나요.</p>
+    <div class="answer" id="answer" aria-live="polite"></div>
+  </div>
+</main>
+
+<script src="movies.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let state = { id: null, revealed: false };
+let count = 0;                       // 몇 번째 문제인지 (화면 비우기 하면 0부터 다시)
+let shown = { count: -1, revealed: false };
+
+function render(animate) {
+  const m = findMovie(state.id);
+  $("stage").classList.toggle("waiting", !m);
+  if (!m) {
+    $("label").textContent = "";
+    $("emoji").textContent = "⏳";
+    $("hint").textContent = "관리자가 문제를 내면 여기에 바로 나타나요.";
+    $("answer").innerHTML = "";
+  } else {
+    const isNew = shown.count !== count;
+    if (isNew) {
+      $("label").textContent = `Question ${count}`;
+      $("emoji").textContent = m.emoji;
+      if (animate) { $("emoji").classList.remove("pop"); void $("emoji").offsetWidth; $("emoji").classList.add("pop"); }
+    }
+    $("hint").textContent = state.revealed ? "" : "어떤 영화일까요? 🤔";
+    if (!state.revealed) {
+      $("answer").innerHTML = "";
+    } else if (isNew || !shown.revealed) {
+      $("answer").innerHTML = "<small>정답</small><b></b>";
+      $("answer").querySelector("b").textContent = m.title;
+    }
+  }
+  shown = { count, revealed: state.revealed };
+}
+
+subscribe((msg, live) => {
+  if (!msg) return;
+  if (msg.t === "q") count++;
+  if (msg.t === "c") count = 0;
+  state = reduceState(state, msg);
+  render(live);
+}, s => {
+  $("status").className = "status " + s;
+  $("status").querySelector("span").textContent =
+    s === "live" ? "실시간 연결됨" : s === "connecting" ? "연결 중…" : "재연결 중…";
+});
+render(false);
+</script>
+</body>
+</html>
