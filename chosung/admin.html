@@ -18,7 +18,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.5;padding-bottom:190px}
-button,input{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px max(16px,4vw);border-bottom:1px solid var(--line)}
 header h1{margin:0;font:900 20px var(--display);letter-spacing:-.5px}
@@ -56,6 +56,14 @@ h2{font:800 13px var(--display);letter-spacing:2px;text-transform:uppercase;colo
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .item{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px;text-align:left;cursor:pointer;transition:border-color .15s}
 .item:hover{border-color:var(--muted)}
+.item .meta{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 16px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted);white-space:nowrap}
+.tab small{font-weight:400;margin-left:6px;opacity:.8}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.yearSel{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700}
 .item .t{display:block;font-size:14px;font-weight:700}
 .item .c{display:block;font-size:13px;color:var(--mint);letter-spacing:.06em;margin-top:2px}
 .item.sel{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink) inset}
@@ -104,6 +112,10 @@ h2{font:800 13px var(--display);letter-spacing:2px;text-transform:uppercase;colo
   </section>
 
   <h2>영화 목록</h2>
+  <div class="filters">
+    <div class="tabs" id="kinds" role="tablist" aria-label="한국/외국"></div>
+    <select class="yearSel" id="year" aria-label="개봉 연도"></select>
+  </div>
   <div class="tools">
     <input class="search" id="search" type="search" placeholder="제목이나 초성으로 찾기 (예: ㄱㅎ)" aria-label="목록 검색">
     <span class="right">
@@ -113,7 +125,7 @@ h2{font:800 13px var(--display);letter-spacing:2px;text-transform:uppercase;colo
     </span>
   </div>
   <div class="grid" id="grid"></div>
-  <p class="empty" id="empty" hidden>찾는 영화가 없어요. 위 입력칸에 제목을 직접 써도 문제를 낼 수 있어요.</p>
+  <p class="empty" id="empty" hidden>조건에 맞는 영화가 없어요. 위 입력칸에 제목을 직접 써도 문제를 낼 수 있어요.</p>
 </div>
 
 <div class="dock">
@@ -128,8 +140,8 @@ h2{font:800 13px var(--display);letter-spacing:2px;text-transform:uppercase;colo
   </div>
 </div>
 
-<!-- 영화 제목 목록은 이모지 영화 게임의 목록을 그대로 씁니다(관리자 페이지에서만 불러옴). -->
-<script src="../movie/movies.js"></script>
+<!-- 영화 제목 목록(관리자 페이지에서만 불러옴) -->
+<script src="titles.js"></script>
 <script src="game.js"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -138,7 +150,11 @@ const SENT_KEY = "chosung-sent-v1";     // 문제번호 → 제목 (정답 공�
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
-const TITLES = [...new Set((window.MOVIES || []).map(m => m.title))];
+const BOOK = window.TITLES || [];
+const TITLES = BOOK.map(m => m.title);
+const INFO = Object.fromEntries(BOOK.map(m => [m.title, m]));
+const FILTER_KEY = "chosung-filter-v1";
+let filter = load(FILTER_KEY, { kind: "all", year: "all" });
 let used = new Set(load(USED_KEY, []));
 let sent = load(SENT_KEY, {});
 let live = CS.EMPTY;
@@ -151,11 +167,12 @@ $("copyBtn").onclick = () => navigator.clipboard.writeText(viewerUrl).then(() =>
 const current = () => $("titleIn").value.trim().replace(/\s+/g, " ");
 
 // 영화 목록 카드
-TITLES.forEach(title => {
+BOOK.forEach(({ title, year, kr }) => {
   const b = document.createElement("button");
   b.className = "item";
   b.dataset.title = title;
-  b.innerHTML = `<span class="t"></span><span class="c"></span>`;
+  b.innerHTML = `<span class="meta"></span><span class="t"></span><span class="c"></span>`;
+  b.querySelector(".meta").textContent = `${year} · ${kr ? "🇰🇷 한국" : "🌍 외국"}`;
   b.querySelector(".t").textContent = title;
   b.querySelector(".c").textContent = CS.toChosung(title);
   b.onclick = () => { $("titleIn").value = title; render(); };
@@ -163,7 +180,32 @@ TITLES.forEach(title => {
   $("grid").appendChild(b);
 });
 
+// 한국/외국, 연도 필터
+const KINDS = [["all", "전체"], ["k", "🇰🇷 한국"], ["f", "🌍 외국"]];
+KINDS.forEach(([v, name]) => {
+  const t = document.createElement("button");
+  t.className = "tab";
+  t.dataset.kind = v;
+  t.onclick = () => { filter.kind = v; save(FILTER_KEY, filter); render(); };
+  t.append(name, document.createElement("small"));
+  $("kinds").appendChild(t);
+});
+const YEARS = [...new Set(BOOK.map(m => m.year))].sort((a, b) => b - a);
+[["all", "전체 연도"], ...YEARS.map(y => [String(y), `${y}년`])].forEach(([v, name]) => {
+  const o = document.createElement("option");
+  o.value = v; o.textContent = name;
+  $("year").appendChild(o);
+});
+if (![...$("year").options].some(o => o.value === filter.year)) filter.year = "all";
+$("year").value = filter.year;
+$("year").onchange = () => { filter.year = $("year").value; save(FILTER_KEY, filter); render(); };
+
+const kindOk = (m, kind) => kind === "all" || (kind === "k") === m.kr;
+const yearOk = m => filter.year === "all" || String(m.year) === filter.year;
+
 const matches = (title, q) => {
+  const m = INFO[title];
+  if (m && !(kindOk(m, filter.kind) && yearOk(m))) return false;
   if (!q) return true;
   const nq = q.replace(/\s+/g, "");
   return title.replace(/\s+/g, "").includes(nq) || CS.toChosung(title).replace(/\s+/g, "").includes(nq);
@@ -183,7 +225,7 @@ $("randomBtn").onclick = () => {
   render();
   const el = [...$("grid").children].find(b => b.dataset.title === current());
   if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
-  if (!fresh.length) toast("목록의 문제를 다 냈어요. 이미 낸 문제 중에서 골랐어요.");
+  if (!fresh.length) toast("지금 보이는 목록의 문제를 다 냈어요. 이미 낸 문제 중에서 골랐어요.");
 };
 
 function problemOf(title) {
@@ -214,7 +256,11 @@ function render() {
     b.classList.toggle("live", !!liveTitle && t === liveTitle);
   });
   $("empty").hidden = shown > 0;
-  $("usedCount").textContent = used.size ? `${used.size}개 출제함` : "";
+  $("usedCount").textContent = `${shown}편` + (used.size ? ` · ${used.size}개 출제함` : "");
+  [...$("kinds").children].forEach(t => {
+    t.setAttribute("aria-selected", String(t.dataset.kind === filter.kind));
+    t.querySelector("small").textContent = BOOK.filter(m => kindOk(m, t.dataset.kind) && yearOk(m)).length;
+  });
 
   const p = $("preview");
   p.innerHTML = "";
