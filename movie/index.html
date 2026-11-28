@@ -12,7 +12,7 @@
 :root{
   color-scheme: dark;
   --bg:#1d1d1f; --panel:#252528; --line:#34343a;
-  --fg:#f4f4f5; --muted:#8d8d96; --pink:#fd2155; --mint:#08fdd8;
+  --fg:#f4f4f5; --muted:#8d8d96; --pink:#fd2155; --mint:#08fdd8; --gold:#ffc94d;
   --display:"Archivo","Noto Sans KR",system-ui,sans-serif;
   --body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
 }
@@ -28,7 +28,9 @@ header h1 span{color:var(--pink)}
 
 main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px 56px}
 .stage{width:100%;max-width:720px;text-align:center}
-.label{font:800 14px var(--display);color:var(--mint);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;min-height:22px}
+.label{font:800 14px var(--display);color:var(--mint);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;min-height:26px;display:flex;justify-content:center;align-items:center;gap:10px}
+.lv{font:700 12px var(--body);letter-spacing:0;border:1px solid currentColor;border-radius:999px;padding:1px 10px}
+.lv1{color:var(--mint)} .lv2{color:var(--gold)} .lv3{color:var(--pink)}
 .emoji{background:var(--panel);border:1px solid var(--line);border-radius:28px;font-size:clamp(40px,13vw,120px);line-height:1.25;padding:clamp(32px,8vw,64px) 8px;letter-spacing:.06em;white-space:nowrap;overflow:hidden;user-select:none}
 .emoji.pop{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
 @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
@@ -72,7 +74,10 @@ function render(animate) {
   } else {
     const isNew = shown.count !== count;
     if (isNew) {
-      $("label").textContent = `Question ${count}`;
+      $("label").innerHTML = "<span></span><span></span>";
+      $("label").firstChild.textContent = `Question ${count}`;
+      $("label").lastChild.className = `lv lv${m.level}`;
+      $("label").lastChild.textContent = LEVELS[m.level];
       $("emoji").textContent = m.emoji;
       if (animate) { $("emoji").classList.remove("pop"); void $("emoji").offsetWidth; $("emoji").classList.add("pop"); }
     }
