@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="관리자가 내는 초성을 보고 영화 제목을 맞혀 보세요.">
+<title>초성 영화 퀴즈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#1d1d1f; --panel:#252528; --line:#34343a;
+  --fg:#f4f4f5; --muted:#8d8d96; --pink:#fd2155; --mint:#08fdd8; --gold:#ffc94d;
+  --display:"Archivo","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.6;display:flex;flex-direction:column}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px max(16px,4vw);border-bottom:1px solid var(--line)}
+header h1{margin:0;font:900 20px var(--display);letter-spacing:-.5px}
+header h1 span{color:var(--pink)}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);white-space:nowrap}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.live i{background:var(--mint);box-shadow:0 0 0 4px rgba(8,253,216,.15)}
+.status.offline i{background:var(--pink)}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px 56px}
+.stage{width:100%;max-width:760px;text-align:center}
+.label{font:800 14px var(--display);color:var(--mint);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;min-height:26px}
+.board{background:var(--panel);border:1px solid var(--line);border-radius:28px;padding:clamp(28px,7vw,56px) clamp(12px,3vw,28px);display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(14px,3vw,28px);user-select:none}
+.word{display:flex;gap:clamp(5px,1.2vw,10px)}
+.ch{--s:clamp(40px,11vw,84px);width:var(--s);height:var(--s);display:grid;place-items:center;border-radius:14px;background:var(--bg);border:1px solid var(--line);font:900 calc(var(--s)*.56) var(--body);color:var(--fg)}
+.ch.sym{background:transparent;border-color:transparent;width:auto;min-width:calc(var(--s)*.35);color:var(--muted)}
+.board.small .ch{--s:clamp(30px,7.5vw,60px)}
+.board.pop .ch{animation:pop .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.waiting .board{font-size:clamp(40px,10vw,64px);color:var(--muted)}
+.hint{color:var(--muted);margin:18px 0 0;min-height:26px}
+
+.guess{display:flex;gap:8px;max-width:460px;margin:22px auto 0}
+.guess input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:12px 18px;font-size:16px}
+.guess input:focus{border-color:var(--mint);outline:none}
+.guess button{border:0;border-radius:999px;padding:12px 22px;font-weight:700;background:var(--pink);color:#fff;cursor:pointer;white-space:nowrap}
+.guess button:disabled{opacity:.35;cursor:not-allowed}
+.guess.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.result{min-height:24px;margin-top:10px;font-size:14px;color:var(--muted)}
+.result.ok{color:var(--mint);font-weight:700}
+.result.no{color:var(--pink)}
+
+.answer{margin-top:22px;min-height:64px}
+.answer b{display:inline-block;font:900 clamp(28px,7vw,44px) var(--body);color:var(--mint);animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.answer small{display:block;color:var(--muted);font-size:13px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Cho<span>Sung</span></h1>
+  <div class="status" id="status"><i></i><span>연결 중…</span></div>
+</header>
+
+<main>
+  <div class="stage waiting" id="stage">
+    <div class="label" id="label"></div>
+    <div class="board" id="board" aria-live="polite">⏳</div>
+    <p class="hint" id="hint">관리자가 문제를 내면 여기에 바로 나타나요.</p>
+    <form class="guess" id="guess" hidden autocomplete="off">
+      <input id="guessIn" placeholder="영화 제목을 입력해 보세요" aria-label="정답 입력" maxlength="60">
+      <button id="guessBtn">확인</button>
+    </form>
+    <div class="result" id="result" aria-live="polite"></div>
+    <div class="answer" id="answer" aria-live="polite"></div>
+  </div>
+</main>
+
+<script src="game.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let state = CS.EMPTY;
+let count = 0;                  // 몇 번째 문제인지 (화면 비우기 하면 0부터 다시)
+let shownQ = null, shownTitle = null;
+let tries = 0, solved = false;
+
+function drawBoard(c) {
+  const b = $("board");
+  b.innerHTML = "";
+  let i = 0;
+  c.split(" ").forEach(w => {
+    const word = document.createElement("div");
+    word.className = "word";
+    [...w].forEach(ch => {
+      const s = document.createElement("span");
+      s.className = "ch" + (/[ㄱ-ㅎ]/.test(ch) ? "" : " sym");
+      s.textContent = ch;
+      s.style.animationDelay = `${(i++ * 0.05).toFixed(2)}s`;
+      word.appendChild(s);
+    });
+    b.appendChild(word);
+  });
+  b.classList.toggle("small", c.replace(/ /g, "").length > 8);
+}
+
+function render(animate) {
+  const has = !!state.q;
+  $("stage").classList.toggle("waiting", !has);
+  if (!has) {
+    $("label").textContent = "";
+    $("board").className = "board";
+    $("board").textContent = "⏳";
+    $("hint").textContent = "관리자가 문제를 내면 여기에 바로 나타나요.";
+    $("guess").hidden = true;
+    $("result").textContent = "";
+    $("answer").innerHTML = "";
+    shownQ = shownTitle = null;
+    return;
+  }
+  if (shownQ !== state.q) {
+    shownQ = state.q; shownTitle = null; tries = 0; solved = false;
+    $("label").textContent = `Question ${count}`;
+    $("board").className = "board";
+    drawBoard(state.c);
+    if (animate) { void $("board").offsetWidth; $("board").classList.add("pop"); }
+    $("guessIn").value = "";
+    $("result").textContent = "";
+    $("result").className = "result";
+    $("answer").innerHTML = "";
+  }
+  const n = state.c.replace(/[^ㄱ-ㅎ]/g, "").length;
+  $("hint").textContent = state.title ? "" : `어떤 영화일까요? 🤔 (한글 ${n}글자)`;
+  $("guess").hidden = !!state.title || !state.h || !CS.canHash || solved;
+  if (state.title && shownTitle !== state.title) {
+    shownTitle = state.title;
+    $("answer").innerHTML = "<small>정답</small><b></b>";
+    $("answer").querySelector("b").textContent = state.title;
+  }
+}
+
+$("guess").onsubmit = async e => {
+  e.preventDefault();
+  const v = $("guessIn").value.trim();
+  if (!v || !state.h) return;
+  const q = state.q;
+  const ok = (await CS.hash(q, v)) === state.h;
+  if (q !== state.q) return;      // 확인하는 사이 문제가 바뀜
+  tries++;
+  if (ok) {
+    solved = true;
+    $("result").className = "result ok";
+    $("result").textContent = `정답이에요! 🎉 (${tries}번 만에 맞힘)`;
+    render(false);
+  } else {
+    $("result").className = "result no";
+    $("result").textContent = `아니에요. 다시 생각해 보세요! (${tries}번째 시도)`;
+    $("guess").classList.remove("shake"); void $("guess").offsetWidth; $("guess").classList.add("shake");
+    $("guessIn").select();
+  }
+};
+
+CS.subscribe((msg, live) => {
+  if (!msg) return;
+  if (msg.t === "q") count++;
+  if (msg.t === "c") count = 0;
+  state = CS.reduceState(state, msg);
+  render(live);
+}, s => {
+  $("status").className = "status " + s;
+  $("status").querySelector("span").textContent = CS.statusText(s);
+});
+render(false);
+</script>
+</body>
+</html>
