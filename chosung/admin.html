@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>초성 퀴즈 관리자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#1d1d1f; --panel:#252528; --line:#34343a;
+  --fg:#f4f4f5; --muted:#8d8d96; --pink:#fd2155; --mint:#08fdd8; --gold:#ffc94d;
+  --display:"Archivo","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.5;padding-bottom:190px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px max(16px,4vw);border-bottom:1px solid var(--line)}
+header h1{margin:0;font:900 20px var(--display);letter-spacing:-.5px}
+header h1 span{color:var(--pink)}
+header h1 em{font:700 12px var(--body);color:var(--muted);font-style:normal;margin-left:8px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;vertical-align:middle}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status.live i{background:var(--mint);box-shadow:0 0 0 4px rgba(8,253,216,.15)}
+.status.offline i{background:var(--pink)}
+
+.wrap{max-width:1080px;margin:0 auto;padding:20px max(16px,3vw)}
+.share{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-bottom:20px}
+.share code{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--fg);word-break:break-all}
+.small{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;white-space:nowrap;text-decoration:none}
+.small:hover{border-color:var(--mint);color:var(--mint)}
+h2{font:800 13px var(--display);letter-spacing:2px;text-transform:uppercase;color:var(--mint);margin:0 0 10px}
+
+.compose{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:28px}
+.compose input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:18px;font-weight:700}
+.compose input:focus{border-color:var(--mint);outline:none}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.pair > div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.pair small{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+.pair .v{font-size:22px;font-weight:900;word-break:keep-all;overflow-wrap:anywhere}
+.pair .cs .v{color:var(--mint);letter-spacing:.08em}
+.pair .v:empty::before{content:"—";color:var(--muted);font-weight:400}
+.warn{font-size:13px;color:var(--gold);margin:10px 0 0;min-height:0}
+.warn:empty{display:none}
+@media (max-width:560px){.pair{grid-template-columns:1fr}}
+
+.tools{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;font-size:14px;color:var(--muted)}
+.tools .right{display:flex;gap:8px;flex-wrap:wrap}
+.search{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;min-width:0;width:240px;max-width:100%}
+.search:focus{border-color:var(--mint);outline:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.item{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px;text-align:left;cursor:pointer;transition:border-color .15s}
+.item:hover{border-color:var(--muted)}
+.item .meta{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:transparent;border-radius:999px;padding:8px 16px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted);white-space:nowrap}
+.tab small{font-weight:400;margin-left:6px;opacity:.8}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.yearSel{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700}
+.item .t{display:block;font-size:14px;font-weight:700}
+.item .c{display:block;font-size:13px;color:var(--mint);letter-spacing:.06em;margin-top:2px}
+.item.sel{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink) inset}
+.item.used{opacity:.45}
+.item.used .t::after{content:" ✓";color:var(--muted)}
+.item.live{opacity:1;border-color:var(--mint);box-shadow:0 0 0 1px var(--mint) inset}
+.item.live .t::after{content:" ● 출제 중";color:var(--mint);font-size:11px}
+.empty{color:var(--muted);font-size:14px;padding:16px 0}
+
+.dock{position:fixed;left:0;right:0;bottom:0;background:rgba(18,18,20,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:14px max(16px,3vw) calc(14px + env(safe-area-inset-bottom,0px))}
+.dock-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.preview{flex:1;min-width:200px}
+.preview .t{font-weight:700}
+.preview .c{color:var(--mint);letter-spacing:.06em;margin-left:8px}
+.preview small{display:block;color:var(--muted);font-size:12px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border-radius:999px;padding:12px 22px;font-weight:700;cursor:pointer;background:var(--panel);border:1px solid var(--line)}
+.btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.btn.mint{border-color:var(--mint);color:var(--mint)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.toast{min-height:20px;font-size:13px;color:var(--muted);flex-basis:100%;text-align:right}
+.toast.err{color:var(--pink)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Cho<span>Sung</span><em>관리자</em></h1>
+  <div class="status" id="status"><i></i><span>연결 중…</span></div>
+</header>
+
+<div class="wrap">
+  <div class="share">
+    참가자 페이지 <code id="link"></code>
+    <button class="small" id="copyBtn">링크 복사</button>
+    <a class="small" id="openLink" target="_blank" rel="noopener">새 창으로 열기</a>
+  </div>
+
+  <section class="compose">
+    <h2>문제 만들기</h2>
+    <input id="titleIn" placeholder="영화 제목을 입력하거나 아래 목록에서 고르세요" maxlength="60" autocomplete="off" aria-label="영화 제목">
+    <div class="pair">
+      <div><small>영화 제목 (관리자만 보임)</small><div class="v" id="pTitle"></div></div>
+      <div class="cs"><small>초성 (참가자 화면에 나감)</small><div class="v" id="pCho"></div></div>
+    </div>
+    <p class="warn" id="warn"></p>
+  </section>
+
+  <h2>영화 목록</h2>
+  <div class="filters">
+    <div class="tabs" id="kinds" role="tablist" aria-label="한국/외국"></div>
+    <select class="yearSel" id="year" aria-label="개봉 연도"></select>
+  </div>
+  <div class="tools">
+    <input class="search" id="search" type="search" placeholder="제목이나 초성으로 찾기 (예: ㄱㅎ)" aria-label="목록 검색">
+    <span class="right">
+      <span id="usedCount" style="align-self:center"></span>
+      <button class="small" id="randomBtn">🎲 랜덤 고르기</button>
+      <button class="small" id="resetUsed">출제 기록 지우기</button>
+    </span>
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty" hidden>조건에 맞는 영화가 없어요. 위 입력칸에 제목을 직접 써도 문제를 낼 수 있어요.</p>
+</div>
+
+<div class="dock">
+  <div class="dock-in">
+    <div class="preview" id="preview"></div>
+    <div class="btns">
+      <button class="btn primary" id="sendBtn" disabled>문제내기</button>
+      <button class="btn mint" id="revealBtn" disabled>정답 공개</button>
+      <button class="btn" id="clearBtn">화면 비우기</button>
+    </div>
+    <div class="toast" id="toast" aria-live="polite"></div>
+  </div>
+</div>
+
+<!-- 영화 제목 목록(관리자 페이지에서만 불러옴) -->
+<script src="titles.js"></script>
+<script src="game.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const USED_KEY = "chosung-used-v1";     // 출제한 제목들
+const SENT_KEY = "chosung-sent-v1";     // 문제번호 → 제목 (정답 공개용, 이 브라우저에만 저장)
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch (e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+const BOOK = window.TITLES || [];
+const TITLES = BOOK.map(m => m.title);
+const INFO = Object.fromEntries(BOOK.map(m => [m.title, m]));
+const FILTER_KEY = "chosung-filter-v1";
+let filter = load(FILTER_KEY, { kind: "all", year: "all" });
+let used = new Set(load(USED_KEY, []));
+let sent = load(SENT_KEY, {});
+let live = CS.EMPTY;
+
+const viewerUrl = new URL("./", location.href).href;
+$("link").textContent = viewerUrl;
+$("openLink").href = viewerUrl;
+$("copyBtn").onclick = () => navigator.clipboard.writeText(viewerUrl).then(() => toast("링크를 복사했어요."), () => toast("복사하지 못했어요. 직접 선택해 복사해 주세요.", true));
+
+const current = () => $("titleIn").value.trim().replace(/\s+/g, " ");
+
+// 영화 목록 카드
+BOOK.forEach(({ title, year, kr }) => {
+  const b = document.createElement("button");
+  b.className = "item";
+  b.dataset.title = title;
+  b.innerHTML = `<span class="meta"></span><span class="t"></span><span class="c"></span>`;
+  b.querySelector(".meta").textContent = `${year} · ${kr ? "🇰🇷 한국" : "🌍 외국"}`;
+  b.querySelector(".t").textContent = title;
+  b.querySelector(".c").textContent = CS.toChosung(title);
+  b.onclick = () => { $("titleIn").value = title; render(); };
+  b.ondblclick = () => { $("titleIn").value = title; send(); };
+  $("grid").appendChild(b);
+});
+
+// 한국/외국, 연도 필터
+const KINDS = [["all", "전체"], ["k", "🇰🇷 한국"], ["f", "🌍 외국"]];
+KINDS.forEach(([v, name]) => {
+  const t = document.createElement("button");
+  t.className = "tab";
+  t.dataset.kind = v;
+  t.onclick = () => { filter.kind = v; save(FILTER_KEY, filter); render(); };
+  t.append(name, document.createElement("small"));
+  $("kinds").appendChild(t);
+});
+const YEARS = [...new Set(BOOK.map(m => m.year))].sort((a, b) => b - a);
+[["all", "전체 연도"], ...YEARS.map(y => [String(y), `${y}년`])].forEach(([v, name]) => {
+  const o = document.createElement("option");
+  o.value = v; o.textContent = name;
+  $("year").appendChild(o);
+});
+if (![...$("year").options].some(o => o.value === filter.year)) filter.year = "all";
+$("year").value = filter.year;
+$("year").onchange = () => { filter.year = $("year").value; save(FILTER_KEY, filter); render(); };
+
+const kindOk = (m, kind) => kind === "all" || (kind === "k") === m.kr;
+const yearOk = m => filter.year === "all" || String(m.year) === filter.year;
+
+const matches = (title, q) => {
+  const m = INFO[title];
+  if (m && !(kindOk(m, filter.kind) && yearOk(m))) return false;
+  if (!q) return true;
+  const nq = q.replace(/\s+/g, "");
+  return title.replace(/\s+/g, "").includes(nq) || CS.toChosung(title).replace(/\s+/g, "").includes(nq);
+};
+
+$("search").oninput = render;
+$("titleIn").oninput = render;
+$("titleIn").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) send(); };
+
+$("randomBtn").onclick = () => {
+  const liveTitle = sent[live.q];
+  const pool = TITLES.filter(t => matches(t, $("search").value.trim()) && t !== liveTitle);
+  const fresh = pool.filter(t => !used.has(t));
+  const from = fresh.length ? fresh : pool;
+  if (!from.length) return;
+  $("titleIn").value = from[Math.floor(Math.random() * from.length)];
+  render();
+  const el = [...$("grid").children].find(b => b.dataset.title === current());
+  if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  if (!fresh.length) toast("지금 보이는 목록의 문제를 다 냈어요. 이미 낸 문제 중에서 골랐어요.");
+};
+
+function problemOf(title) {
+  if (!title) return "";
+  if (!/[가-힣]/.test(title)) return "한글이 없는 제목이에요. 초성으로 바꿀 글자가 없어 문제를 낼 수 없어요.";
+  if (/[A-Za-z]/.test(title)) return "⚠️ 영어 글자는 초성으로 바뀌지 않고 그대로 참가자 화면에 보여요.";
+  return "";
+}
+
+function render() {
+  const title = current();
+  const cho = CS.toChosung(title);
+  $("pTitle").textContent = title;
+  $("pCho").textContent = title ? cho : "";
+  const warn = problemOf(title);
+  $("warn").textContent = warn;
+  const ok = !!title && /[가-힣]/.test(title);
+
+  const q = $("search").value.trim();
+  const liveTitle = live.q ? sent[live.q] : null;
+  let shown = 0;
+  [...$("grid").children].forEach(b => {
+    const t = b.dataset.title;
+    b.hidden = !matches(t, q);
+    if (!b.hidden) shown++;
+    b.classList.toggle("sel", t === title);
+    b.classList.toggle("used", used.has(t) && t !== liveTitle);
+    b.classList.toggle("live", !!liveTitle && t === liveTitle);
+  });
+  $("empty").hidden = shown > 0;
+  $("usedCount").textContent = `${shown}편` + (used.size ? ` · ${used.size}개 출제함` : "");
+  [...$("kinds").children].forEach(t => {
+    t.setAttribute("aria-selected", String(t.dataset.kind === filter.kind));
+    t.querySelector("small").textContent = BOOK.filter(m => kindOk(m, t.dataset.kind) && yearOk(m)).length;
+  });
+
+  const p = $("preview");
+  p.innerHTML = "";
+  const head = document.createElement("div");
+  if (ok) {
+    head.innerHTML = `<small>낼 문제</small><span class="t"></span><span class="c"></span>`;
+    head.querySelector(".t").textContent = title;
+    head.querySelector(".c").textContent = cho;
+  } else {
+    head.innerHTML = `<small>낼 문제</small><span class="t" style="color:var(--muted)">제목을 입력하거나 목록에서 골라 주세요</span>`;
+  }
+  p.appendChild(head);
+  if (live.q) {
+    const s = document.createElement("small");
+    s.style.marginTop = "2px";
+    s.textContent = `지금 참가자 화면: ${live.c}` + (liveTitle ? ` (${liveTitle})` : "") + (live.title ? " · 정답 공개됨" : "");
+    p.appendChild(s);
+  }
+  $("sendBtn").disabled = !ok;
+  $("revealBtn").disabled = !live.q || !!live.title || !liveTitle;
+  $("revealBtn").title = live.q && !liveTitle ? "다른 기기에서 낸 문제라 이 화면에서는 정답을 모릅니다." : "";
+}
+
+let tt;
+function toast(text, err) {
+  $("toast").textContent = text;
+  $("toast").className = "toast" + (err ? " err" : "");
+  clearTimeout(tt);
+  if (!err) tt = setTimeout(() => { $("toast").textContent = ""; }, 3500);
+}
+
+function post(msg, okText) {
+  ["sendBtn", "revealBtn", "clearBtn"].forEach(id => $(id).disabled = true);
+  return CS.publish(msg)
+    .then(() => { toast(okText); return true; })
+    .catch(e => {
+      toast(e.status === 429
+        ? "전송 한도를 넘었어요 (ntfy.sh 무료: 인터넷 주소(IP)당 12시간에 250개). 잠시 후 다시 시도하거나 다른 네트워크에서 보내 주세요."
+        : `전송하지 못했어요 (${e.message}). 인터넷 연결을 확인해 주세요.`, true);
+      return false;
+    })
+    .finally(() => { $("clearBtn").disabled = false; render(); });
+}
+
+async function send() {
+  const title = current();
+  if (!title || !/[가-힣]/.test(title) || $("sendBtn").disabled) return;
+  const q = CS.newNonce();
+  const msg = { t: "q", q, c: CS.toChosung(title) };
+  if (CS.canHash) msg.h = await CS.hash(q, title);
+  // 먼저 저장해 두어야 내 구독으로 돌아온 메시지를 받았을 때 제목을 알 수 있다.
+  sent[q] = title;
+  const keys = Object.keys(sent);
+  if (keys.length > 300) keys.slice(0, keys.length - 300).forEach(k => delete sent[k]);
+  save(SENT_KEY, sent);
+  const ok = await post(msg, `"${title}" 문제를 냈어요. (${msg.c})`);
+  if (ok) { used.add(title); save(USED_KEY, [...used]); $("titleIn").value = ""; render(); }
+}
+$("sendBtn").onclick = send;
+$("revealBtn").onclick = () => {
+  const title = sent[live.q];
+  if (live.q && title) post({ t: "a", q: live.q, title }, "정답을 공개했어요.");
+};
+$("clearBtn").onclick = () => post({ t: "c" }, "참가자 화면을 비웠어요.");
+$("resetUsed").onclick = () => {
+  if (!used.size || confirm("출제 기록(✓ 표시)을 모두 지울까요?")) { used.clear(); save(USED_KEY, []); render(); }
+};
+
+CS.subscribe(msg => {
+  live = CS.reduceState(live, msg);
+  render();
+}, s => {
+  $("status").className = "status " + s;
+  $("status").querySelector("span").textContent = CS.statusText(s);
+});
+render();
+</script>
+</body>
+</html>
