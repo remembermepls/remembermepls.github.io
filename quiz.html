@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="이모지만 보고 영화와 속담을 맞혀 보세요.">
+<title>이모지 퀴즈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#1d1d1f;
+  --panel:#252528;
+  --line:#34343a;
+  --fg:#f4f4f5;
+  --muted:#8d8d96;
+  --pink:#fd2155;
+  --mint:#08fdd8;
+  --display:"Archivo","Noto Sans KR",system-ui,sans-serif;
+  --body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.6;display:flex;flex-direction:column}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+
+header{display:flex;justify-content:space-between;align-items:center;padding:16px max(16px,4vw);border-bottom:1px solid var(--line)}
+header h1{margin:0;font:900 20px var(--display);letter-spacing:-.5px}
+header h1 span{color:var(--pink)}
+header a{color:var(--muted);text-decoration:none;font-size:14px}
+header a:hover{color:var(--mint)}
+
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px 48px}
+.card{width:100%;max-width:520px}
+.hidden{display:none !important}
+
+/* start / result */
+.intro{text-align:center}
+.intro .big{font-size:64px;line-height:1.2;margin:0 0 8px}
+.intro h2{font:900 32px var(--display);margin:0 0 8px;letter-spacing:-1px}
+.intro p{color:var(--muted);margin:0 0 28px}
+.btn{display:inline-block;border:0;border-radius:999px;background:var(--pink);color:#fff;font-weight:700;padding:14px 36px;cursor:pointer;transition:transform .15s,background .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+.btn.ghost:hover{border-color:var(--mint);color:var(--mint)}
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* quiz */
+.meta{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted);margin-bottom:10px}
+.meta .cat{color:var(--mint);font-weight:700}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:24px}
+.bar i{display:block;height:100%;width:0;background:var(--mint);transition:width .3s}
+.emoji{background:var(--panel);border:1px solid var(--line);border-radius:20px;text-align:center;font-size:clamp(44px,13vw,72px);line-height:1.3;padding:36px 12px;margin-bottom:20px;letter-spacing:4px;user-select:none}
+.choices{display:grid;gap:10px}
+.choice{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s}
+.choice kbd{flex:none;width:24px;height:24px;border-radius:6px;border:1px solid var(--line);display:grid;place-items:center;font:700 12px var(--display);color:var(--muted)}
+.choice:hover:not(:disabled){border-color:var(--mint)}
+.choice:disabled{cursor:default}
+.choice.right{border-color:var(--mint);background:rgba(8,253,216,.12)}
+.choice.right kbd{border-color:var(--mint);color:var(--mint)}
+.choice.wrong{border-color:var(--pink);background:rgba(253,33,85,.12)}
+.choice.wrong kbd{border-color:var(--pink);color:var(--pink)}
+.feedback{min-height:28px;text-align:center;margin:16px 0 8px;font-weight:700}
+.feedback.ok{color:var(--mint)}
+.feedback.no{color:var(--pink)}
+.next{display:flex;justify-content:center}
+
+.score{font:900 72px var(--display);line-height:1;margin:8px 0 4px}
+.score small{font-size:28px;color:var(--muted)}
+.best{color:var(--muted);font-size:14px;margin-bottom:28px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Emoji<span>Quiz</span></h1>
+  <a href="./">← 홈으로</a>
+</header>
+
+<main>
+  <div class="card">
+    <!-- start -->
+    <section id="start" class="intro">
+      <p class="big">🤔🎬💬</p>
+      <h2>이모지 퀴즈</h2>
+      <p>이모지만 보고 영화와 속담을 맞혀 보세요.<br>총 <b id="total"></b>문제, 키보드 1~4로도 고를 수 있어요.</p>
+      <button class="btn" id="startBtn">시작하기</button>
+    </section>
+
+    <!-- quiz -->
+    <section id="quiz" class="hidden">
+      <div class="meta"><span class="cat" id="cat"></span><span id="progress"></span></div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="emoji" id="emoji" aria-live="polite"></div>
+      <div class="choices" id="choices"></div>
+      <p class="feedback" id="feedback" aria-live="polite"></p>
+      <div class="next"><button class="btn hidden" id="nextBtn">다음 문제 →</button></div>
+    </section>
+
+    <!-- result -->
+    <section id="result" class="intro hidden">
+      <p class="big" id="resultEmoji"></p>
+      <h2 id="resultTitle"></h2>
+      <div class="score" id="score"></div>
+      <p class="best" id="best"></p>
+      <div class="actions">
+        <button class="btn" id="retryBtn">다시 하기</button>
+        <a class="btn ghost" href="./">홈으로</a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+// 문제 목록: 여기에 { cat, emoji, answer } 를 추가하면 자동으로 출제됩니다.
+// 보기(오답)는 같은 카테고리의 다른 정답 중에서 무작위로 뽑습니다.
+const QUESTIONS = [
+  { cat: "영화", emoji: "🦁👑🌅", answer: "라이온 킹" },
+  { cat: "영화", emoji: "👸❄️⛄", answer: "겨울왕국" },
+  { cat: "영화", emoji: "🚢🧊💔", answer: "타이타닉" },
+  { cat: "영화", emoji: "🦖🦕🏝️", answer: "쥬라기 공원" },
+  { cat: "영화", emoji: "🐀👨‍🍳🍲", answer: "라따뚜이" },
+  { cat: "영화", emoji: "🧙‍♂️💍🌋", answer: "반지의 제왕" },
+  { cat: "영화", emoji: "🐠🔍🌊", answer: "니모를 찾아서" },
+  { cat: "영화", emoji: "👴🏠🎈", answer: "업" },
+  { cat: "영화", emoji: "🤖🌱🚀", answer: "월-E" },
+  { cat: "영화", emoji: "🧸🤠🚀", answer: "토이 스토리" },
+  { cat: "속담", emoji: "🐒🌳⬇️", answer: "원숭이도 나무에서 떨어진다" },
+  { cat: "속담", emoji: "🐸🕳️", answer: "우물 안 개구리" },
+  { cat: "속담", emoji: "🐄❌🔨🏚️", answer: "소 잃고 외양간 고친다" },
+  { cat: "속담", emoji: "🌾⬇️🙇", answer: "벼는 익을수록 고개를 숙인다" },
+  { cat: "속담", emoji: "🐯💬👀", answer: "호랑이도 제 말 하면 온다" },
+  { cat: "속담", emoji: "🌅🐦🐛", answer: "일찍 일어나는 새가 벌레를 잡는다" },
+  { cat: "사자성어", emoji: "1️⃣🪨2️⃣🐦", answer: "일석이조" },
+  { cat: "사자성어", emoji: "🐍🦶", answer: "사족" },
+  { cat: "사자성어", emoji: "🔟👤🔟🎨", answer: "십인십색" },
+  { cat: "사자성어", emoji: "🎋🐴👫", answer: "죽마고우" },
+];
+const ROUND_SIZE = 10;
+const BEST_KEY = "emoji-quiz-best";
+
+const $ = id => document.getElementById(id);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+let round = [], idx = 0, score = 0, locked = false;
+
+function show(id) {
+  ["start", "quiz", "result"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+}
+
+function startGame() {
+  round = shuffle(QUESTIONS).slice(0, Math.min(ROUND_SIZE, QUESTIONS.length));
+  idx = 0; score = 0;
+  show("quiz");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = round[idx];
+  locked = false;
+  $("cat").textContent = q.cat;
+  $("progress").textContent = `${idx + 1} / ${round.length} · 점수 ${score}`;
+  $("bar").style.width = `${(idx / round.length) * 100}%`;
+  $("emoji").textContent = q.emoji;
+  $("feedback").textContent = "";
+  $("feedback").className = "feedback";
+  $("nextBtn").classList.add("hidden");
+
+  const pool = shuffle(QUESTIONS.filter(o => o.cat === q.cat && o.answer !== q.answer).map(o => o.answer));
+  const options = shuffle([q.answer, ...pool.slice(0, 3)]);
+  const box = $("choices");
+  box.innerHTML = "";
+  options.forEach((text, i) => {
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.dataset.answer = text;
+    b.innerHTML = `<kbd>${i + 1}</kbd><span></span>`;
+    b.querySelector("span").textContent = text;
+    b.addEventListener("click", () => choose(b));
+    box.appendChild(b);
+  });
+}
+
+function choose(btn) {
+  if (locked) return;
+  locked = true;
+  const q = round[idx];
+  const correct = btn.dataset.answer === q.answer;
+  if (correct) score++;
+  [...$("choices").children].forEach(b => {
+    b.disabled = true;
+    if (b.dataset.answer === q.answer) b.classList.add("right");
+  });
+  if (!correct) btn.classList.add("wrong");
+  const fb = $("feedback");
+  fb.textContent = correct ? "정답! 🎉" : `아쉬워요 😅 정답은 '${q.answer}'`;
+  fb.className = "feedback " + (correct ? "ok" : "no");
+  $("progress").textContent = `${idx + 1} / ${round.length} · 점수 ${score}`;
+  const next = $("nextBtn");
+  next.textContent = idx + 1 < round.length ? "다음 문제 →" : "결과 보기 →";
+  next.classList.remove("hidden");
+  next.focus();
+}
+
+function nextQuestion() {
+  idx++;
+  if (idx < round.length) renderQuestion();
+  else showResult();
+}
+
+function showResult() {
+  const ratio = score / round.length;
+  const [emoji, title] =
+    ratio === 1 ? ["🏆", "완벽해요!"] :
+    ratio >= .7 ? ["😎", "이모지 고수"] :
+    ratio >= .4 ? ["🙂", "꽤 잘했어요"] :
+                  ["🫠", "다시 도전!"];
+  $("resultEmoji").textContent = emoji;
+  $("resultTitle").textContent = title;
+  $("score").innerHTML = `${score}<small> / ${round.length}</small>`;
+
+  let best = 0;
+  try { best = Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) {}
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+    $("best").textContent = "🎊 새 최고 기록!";
+  } else {
+    $("best").textContent = `최고 기록 ${best}점`;
+  }
+  show("result");
+  $("retryBtn").focus();
+}
+
+document.addEventListener("keydown", e => {
+  if ($("quiz").classList.contains("hidden")) return;
+  const n = Number(e.key);
+  if (!locked && n >= 1 && n <= 4) {
+    const b = $("choices").children[n - 1];
+    if (b) b.click();
+  } else if (locked && e.key === "Enter" && document.activeElement !== $("nextBtn")) {
+    nextQuestion();
+  }
+});
+
+$("total").textContent = Math.min(ROUND_SIZE, QUESTIONS.length);
+$("startBtn").addEventListener("click", startGame);
+$("nextBtn").addEventListener("click", nextQuestion);
+$("retryBtn").addEventListener("click", startGame);
+</script>
+</body>
+</html>
