@@ -99,4 +99,4 @@ window.subscribe = (onMsg, onStatus) => {
 
 window.publish = msg =>
   fetch(`${window.RELAY}/${encodeURIComponent(window.TOPIC)}`, { method: "POST", body: JSON.stringify(msg) })
-    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); });
+    .then(r => { if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status }); });

@@ -157,23 +157,30 @@ function toast(text, err) {
   $("toast").textContent = text;
   $("toast").className = "toast" + (err ? " err" : "");
   clearTimeout(tt);
-  tt = setTimeout(() => { $("toast").textContent = ""; }, 3500);
+  // 오류는 다음 동작 전까지 남겨 둔다.
+  if (!err) tt = setTimeout(() => { $("toast").textContent = ""; }, 3500);
 }
 
 function post(msg, okText) {
   const btns = ["sendBtn", "revealBtn", "clearBtn"].map($);
   btns.forEach(b => b.disabled = true);
   return publish(msg)
-    .then(() => toast(okText))
-    .catch(e => toast(`전송하지 못했어요 (${e.message}). 인터넷 연결을 확인해 주세요.`, true))
+    .then(() => { toast(okText); return true; })
+    .catch(e => {
+      toast(e.status === 429
+        ? "전송 한도를 넘었어요 (ntfy.sh 무료: 인터넷 주소(IP)당 12시간에 250개). 잠시 후 다시 시도하거나 다른 네트워크(예: 휴대폰 데이터)에서 보내 주세요."
+        : `전송하지 못했어요 (${e.message}). 인터넷 연결을 확인해 주세요.`, true);
+      return false;
+    })
     .finally(() => { $("clearBtn").disabled = false; render(); });
 }
 
 function send() {
   const m = findMovie(selected);
   if (!m) return;
-  used.add(m.id); saveUsed();
-  post({ t: "q", id: m.id }, `#${m.id} 문제를 냈어요.`);
+  post({ t: "q", id: m.id }, `#${m.id} 문제를 냈어요.`).then(sent => {
+    if (sent) { used.add(m.id); saveUsed(); render(); }
+  });
 }
 $("sendBtn").onclick = send;
 $("revealBtn").onclick = () => {
