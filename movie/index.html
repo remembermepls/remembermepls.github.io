@@ -79,6 +79,9 @@ function render(animate) {
       $("label").lastChild.className = `lv lv${m.level}`;
       $("label").lastChild.textContent = LEVELS[m.level];
       $("emoji").textContent = m.emoji;
+      // 이모지가 많을수록 작게 (한 줄 유지)
+      const n = Math.max(3, emojiCount(m.emoji));
+      $("emoji").style.fontSize = `clamp(28px, ${(62 / n).toFixed(1)}vw, ${Math.round(340 / n)}px)`;
       if (animate) { $("emoji").classList.remove("pop"); void $("emoji").offsetWidth; $("emoji").classList.add("pop"); }
     }
     $("hint").textContent = state.revealed ? "" : "어떤 영화일까요? 🤔";
