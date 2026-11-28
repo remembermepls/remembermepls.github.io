@@ -9,7 +9,7 @@
 2. 왼쪽 메뉴 **빌드 → Realtime Database → 데이터베이스 만들기**를 누릅니다.
    - 위치는 `asia-southeast1 (싱가포르)`를 추천해요.
    - 보안 규칙은 아무거나 고르고 넘어간 뒤, 다음 단계에서 바꿉니다.
-3. Realtime Database의 **규칙** 탭에 `ox/database.rules.json` 내용을 그대로 붙여 넣고 **게시**를 누릅니다.
+3. Realtime Database의 **규칙** 탭에 저장소 맨 위의 `database.rules.json` 내용을 그대로 붙여 넣고 **게시**를 누릅니다. OX 서바이벌과 가위바위보 서바이벌의 규칙이 함께 들어 있어요.
 4. **프로젝트 설정(톱니바퀴) → 일반 → 내 앱 → 웹(`</>`)**에서 앱을 등록합니다. 그러면 `firebaseConfig` 값이 나와요.
 5. 그 값을 `ox/firebase-config.js`에 붙여 넣습니다.
    - `databaseURL`이 없으면 Realtime Database 화면 위쪽에 있는 주소를 넣으세요.

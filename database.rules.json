@@ -1,0 +1,60 @@
+{
+  "rules": {
+    "ox": {
+      "game": {
+        ".read": true,
+        ".write": true
+      },
+      "players": {
+        ".read": true,
+        "$pid": {
+          ".write": "data.exists() || root.child('ox/game/locked').val() !== true",
+          ".validate": "newData.hasChildren(['name', 'alive']) && newData.child('name').isString() && newData.child('name').val().length <= 20"
+        }
+      },
+      "answers": {
+        ".read": true,
+        "$rk": {
+          "$pid": {
+            ".write": "$rk === root.child('ox/game/rkey').val() && root.child('ox/game/status').val() === 'question' && root.child('ox/players/' + $pid + '/alive').val() === true && (root.child('ox/game/deadline').val() === 0 || now <= root.child('ox/game/deadline').val() + 1500)",
+            ".validate": "newData.val() === 'O' || newData.val() === 'X'"
+          }
+        }
+      },
+      "banks": {
+        "$key": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    },
+    "rps": {
+      "game": {
+        ".read": true,
+        ".write": true
+      },
+      "players": {
+        ".read": true,
+        "$pid": {
+          ".write": "data.exists() || root.child('rps/game/locked').val() !== true",
+          ".validate": "newData.hasChildren(['name', 'alive']) && newData.child('name').isString() && newData.child('name').val().length <= 20"
+        }
+      },
+      "picks": {
+        ".read": true,
+        "$rk": {
+          "$pid": {
+            ".write": "$rk === root.child('rps/game/rkey').val() && root.child('rps/game/status').val() === 'pick' && root.child('rps/players/' + $pid + '/alive').val() === true && (root.child('rps/game/deadline').val() === 0 || now <= root.child('rps/game/deadline').val() + 1500)",
+            ".validate": "newData.val() === 'S' || newData.val() === 'R' || newData.val() === 'P'"
+          }
+        }
+      },
+      "secret": {
+        "$key": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+  }
+}
