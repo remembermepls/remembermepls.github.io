@@ -11,7 +11,9 @@
   var p = decodeURIComponent(location.pathname).toLowerCase();
   var rest = location.search + location.hash;
   var to = null;
-  if (p.indexOf("admin") !== -1 || p.indexOf("관리자") !== -1) to = "/movie/admin.html";
+  var admin = p.indexOf("admin") !== -1 || p.indexOf("관리자") !== -1;
+  if (p.indexOf("chosung") !== -1 || p.indexOf("초성") !== -1) to = admin ? "/chosung/admin.html" : "/chosung/";
+  else if (admin) to = "/movie/admin.html";
   else if (p.indexOf("movie") !== -1 || p.indexOf("영화") !== -1) to = "/movie/";
   else if (p.indexOf("quiz") !== -1 || p.indexOf("퀴즈") !== -1) to = "/quiz.html";
   if (to && to !== location.pathname) location.replace(to + rest);
@@ -34,6 +36,7 @@ a:hover{border-color:#08fdd8;color:#08fdd8}
   <nav>
     <a href="/">홈</a>
     <a href="/movie/">🎬 이모지 영화 맞추기</a>
+    <a href="/chosung/">🔤 초성 영화 퀴즈</a>
     <a href="/quiz.html">🤔 이모지 퀴즈</a>
   </nav>
 </main>
