@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="맞히면 살아남는 OX 서바이벌 퀴즈">
+<title>OX 서바이벌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Noto+Sans+KR:wght@400;700;900&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px 16px 48px}
+.card{width:100%;max-width:520px}
+.join{display:grid;gap:12px;text-align:left}
+.join .btn{width:100%;padding:14px}
+.dim{opacity:.55}
+</style>
+</head>
+<body>
+<header>
+  <h1>OX<span>서바이벌</span></h1>
+  <span class="me" id="me"></span>
+</header>
+<main><div class="card" id="main" aria-live="polite"></div></main>
+
+<script type="module">
+import { db, configured, R, serverNow, cleanName, nameKey, randomId, esc, store, SETUP_HTML } from "./common.js";
+import { onValue, get, set, off } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const $main = document.getElementById("main");
+const $me = document.getElementById("me");
+const ME_KEY = "ox_me";
+
+let me = store.get(ME_KEY);        // { key, name, token }
+let game = null, gameLoaded = false;
+let player = null, playerLoaded = false;
+let players = {};
+let myAnswer = null, answerRef = null;
+let notice = "";
+let lastSig = null;
+
+if (!configured) {
+  $main.innerHTML = SETUP_HTML;
+} else {
+  onValue(R("game"), (s) => { game = s.val() || {}; gameLoaded = true; watchAnswer(); render(); });
+  onValue(R("players"), (s) => { players = s.val() || {}; render(); });
+  if (me) watchPlayer();
+  setInterval(tick, 200);
+}
+
+function watchPlayer() {
+  onValue(R("players/" + me.key), (s) => {
+    const p = s.val();
+    playerLoaded = true;
+    if (!p || p.token !== me.token) {
+      // 관리자가 내보냈거나 명단이 초기화됨 → 다시 이름 입력
+      off(R("players/" + me.key));
+      if (me) notice = "참가자 명단에서 빠졌어요. 다시 입장해 주세요.";
+      store.del(ME_KEY); me = null; player = null;
+    } else {
+      player = p;
+    }
+    render();
+  });
+}
+
+function watchAnswer() {
+  const rk = game?.rkey && me ? `answers/${game.rkey}/${me.key}` : null;
+  if (answerRef === rk) return;
+  if (answerRef) off(R(answerRef));
+  answerRef = rk; myAnswer = null;
+  if (rk) onValue(R(rk), (s) => { myAnswer = s.val(); render(); });
+}
+
+async function join(name) {
+  const $err = document.getElementById("err");
+  const $btn = document.getElementById("joinBtn");
+  name = cleanName(name);
+  if (!name) { $err.textContent = "이름을 입력해 주세요."; return; }
+  if (name.length > 20) { $err.textContent = "이름은 20자 이하로 입력해 주세요."; return; }
+  const key = nameKey(name);
+  const token = randomId();
+  $btn.disabled = true; $err.textContent = "";
+  try {
+    const cur = (await get(R("players/" + key))).val();
+    if (cur) {
+      $err.textContent = "이미 사용 중인 이름이에요. 다른 이름을 입력해 주세요.";
+      $btn.disabled = false; return;
+    }
+    if (game?.locked) {
+      $err.textContent = "이미 퀴즈가 시작되어 입장할 수 없어요.";
+      $btn.disabled = false; return;
+    }
+    await set(R("players/" + key), { name, alive: true, token, joinedAt: serverNow() });
+    me = { key, name, token };
+    store.set(ME_KEY, me);
+    notice = "";
+    watchPlayer(); watchAnswer();
+  } catch (e) {
+    $err.textContent = game?.locked ? "이미 퀴즈가 시작되어 입장할 수 없어요." : "입장에 실패했어요. 잠시 후 다시 시도해 주세요.";
+    $btn.disabled = false;
+  }
+}
+
+async function choose(a) {
+  if (!me || !game?.rkey || !player?.alive || game.status !== "question") return;
+  if (game.deadline && serverNow() > game.deadline) return;
+  try {
+    await set(R(`answers/${game.rkey}/${me.key}`), a);
+  } catch (e) {
+    const h = document.getElementById("hint");
+    if (h) h.textContent = "제출할 수 없어요. 이미 마감되었을 수 있어요.";
+  }
+}
+
+$main.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-a]");
+  if (b && !b.disabled) choose(b.dataset.a);
+});
+$main.addEventListener("submit", (e) => {
+  e.preventDefault();
+  join(document.getElementById("name").value);
+});
+
+const playerList = () => Object.values(players);
+const aliveCount = () => playerList().filter((p) => p.alive).length;
+
+function view() {
+  if (!gameLoaded || (me && !playerLoaded)) {
+    return { sig: "loading", html: `<div class="intro"><p class="big">⏳</p><p>연결하는 중…</p></div>` };
+  }
+  const g = game || {};
+  if (!me || !player) {
+    const locked = !!g.locked;
+    return {
+      sig: "join" + locked + notice,
+      html: `
+        <div class="intro">
+          <p class="big">⭕❌</p>
+          <h2>OX 서바이벌</h2>
+          <p>맞히면 다음 문제로, 틀리면 탈락!<br>끝까지 살아남아 보세요.</p>
+        </div>
+        ${locked
+          ? `<p class="err" style="text-align:center">이미 퀴즈가 시작되어 새로 입장할 수 없어요.</p>`
+          : `<form class="join">
+              <input class="field" id="name" maxlength="20" autocomplete="nickname" placeholder="이름을 입력하세요" required>
+              <button class="btn" id="joinBtn">입장하기</button>
+              <p class="err" id="err">${esc(notice)}</p>
+            </form>`}`,
+      after: () => document.getElementById("name")?.focus(),
+    };
+  }
+
+  const alive = !!player.alive;
+  const round = g.round || 0;
+  const roundLabel = `ROUND ${round}`;
+  const qBox = `<div class="q">${esc(g.text)}</div>`;
+
+  switch (g.status) {
+    case "question": {
+      if (!alive) {
+        return {
+          sig: `spec|${g.rkey}`,
+          html: `
+            <div class="meta"><span class="cat">${roundLabel}</span><span id="timer"></span></div>
+            <div class="bar"><i id="bar"></i></div>
+            <div class="dim">${qBox}</div>
+            <div class="intro"><p class="result no">탈락 · 관전 중</p><p>생존자 ${aliveCount()}명이 도전하고 있어요.</p></div>`,
+        };
+      }
+      return {
+        sig: `q|${g.rkey}|${myAnswer}`,
+        html: `
+          <div class="meta"><span class="cat">${roundLabel}</span><span id="timer"></span></div>
+          <div class="bar"><i id="bar"></i></div>
+          ${qBox}
+          <div class="ox">
+            <button class="o ${myAnswer === "O" ? "sel" : ""}" data-a="O" aria-label="O">O</button>
+            <button class="x ${myAnswer === "X" ? "sel" : ""}" data-a="X" aria-label="X">X</button>
+          </div>
+          <p class="hint" id="hint">${myAnswer ? `<b>${myAnswer}</b> 선택 · 마감 전까지 바꿀 수 있어요` : "정답이라고 생각하는 쪽을 누르세요"}</p>`,
+      };
+    }
+    case "closed":
+      return {
+        sig: `closed|${g.rkey}|${myAnswer}|${alive}`,
+        html: `
+          <div class="meta"><span class="cat">${roundLabel}</span><span>마감</span></div>
+          ${qBox}
+          <div class="intro">
+            <p class="big">🥁</p>
+            <p>마감! 정답 공개를 기다리는 중…<br>${alive ? (myAnswer ? `내 선택: <b>${myAnswer}</b>` : "답을 고르지 않았어요") : "관전 중"}</p>
+          </div>`,
+      };
+    case "reveal": {
+      const st = g.stats || {};
+      const outNow = player.outRound === round;
+      const res = alive
+        ? (g.revived ? `<p class="result ok">패자부활! 다시 도전하세요</p>` : `<p class="result ok">정답! 생존 🎉</p>`)
+        : outNow
+          ? `<p class="result no">${myAnswer ? "아쉽지만 탈락" : "답을 내지 않아 탈락"}</p>`
+          : `<p class="result no">탈락 · 관전 중</p>`;
+      return {
+        sig: `rev|${g.rkey}|${alive}|${g.revived}|${aliveCount()}`,
+        html: `
+          <div class="meta"><span class="cat">${roundLabel}</span><span>정답 공개</span></div>
+          ${qBox}
+          <div class="intro">
+            <div class="answer ${esc(g.answer)}">${esc(g.answer)}</div>
+            ${res}
+            <div class="stats">
+              <span>O <b>${st.o ?? 0}</b>명</span><span>X <b>${st.x ?? 0}</b>명</span><span>생존 <b>${aliveCount()}</b>명</span>
+            </div>
+            <p style="margin-top:20px">${alive ? "다음 문제를 기다려 주세요." : ""}</p>
+          </div>`,
+      };
+    }
+    case "ended": {
+      const winners = playerList().filter((p) => p.alive).map((p) => p.name).sort();
+      return {
+        sig: `end|${g.gameId}|${winners.join(",")}`,
+        html: `
+          <div class="intro">
+            <p class="big">${alive ? "🏆" : "🏁"}</p>
+            <h2>${alive ? "최종 생존!" : "게임 종료"}</h2>
+            <p>${winners.length ? `최종 생존자 ${winners.length}명` : "생존자가 없어요"}</p>
+            <div class="chips">${winners.map((n) => `<span class="chip win">${esc(n)}</span>`).join("")}</div>
+          </div>`,
+      };
+    }
+    default: // lobby
+      return {
+        sig: `lobby|${g.gameId}|${playerList().length}|${alive}`,
+        html: `
+          <div class="intro">
+            <p class="big">🙌</p>
+            <h2>${esc(player.name)}님 환영해요</h2>
+            <p>곧 퀴즈가 시작됩니다. 화면을 켜 두세요.<br>현재 참가자 <b style="color:var(--fg)">${playerList().length}</b>명</p>
+          </div>`,
+      };
+  }
+}
+
+function render() {
+  if (!configured) return;
+  $me.innerHTML = me && player ? `<b>${esc(player.name)}</b> · ${player.alive ? "생존" : "탈락"}` : "";
+  const v = view();
+  if (v.sig === lastSig) return;
+  lastSig = v.sig;
+  $main.innerHTML = v.html;
+  v.after?.();
+  tick();
+}
+
+function tick() {
+  const $t = document.getElementById("timer");
+  if (!$t || game?.status !== "question") return;
+  const $b = document.getElementById("bar");
+  if (!game.deadline) { $t.textContent = "제한시간 없음"; if ($b) $b.style.width = "100%"; return; }
+  const left = Math.max(0, game.deadline - serverNow());
+  $t.textContent = left > 0 ? `${Math.ceil(left / 1000)}초` : "시간 종료";
+  if ($b) $b.style.width = (100 * left / ((game.duration || 1) * 1000)).toFixed(1) + "%";
+  if (left <= 0) {
+    $main.querySelectorAll("[data-a]").forEach((b) => (b.disabled = true));
+    const h = document.getElementById("hint");
+    if (h && !h.dataset.done) { h.dataset.done = 1; h.innerHTML = myAnswer ? `<b>${myAnswer}</b> 제출 완료 · 정답 공개를 기다려요` : "시간이 끝났어요"; }
+  }
+}
+</script>
+</body>
+</html>
